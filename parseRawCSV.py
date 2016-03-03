@@ -93,18 +93,28 @@ from nltk.parse.generate import generate, demo_grammar
 from nltk import CFG
 from operator import itemgetter
 
-nonterms = {".",",",r"PRP$",":"}
-postags = postag[:99]
+nonterms = {".",",",r"PRP$",":","$","\'\'", "(", ")", "CC", "CD", "DT", "EX", "FW", "IN"}
+nonpos = {"i", "\""}
+#test = {"NN","JJ","JJR","MD","RB","VB","RBS","RBR","UH", "VBP", "VBZ", "WDT", "CC", "NNS", "PRP", "VBN", "EX"}
+postags = postag
 postags.sort(key=itemgetter(1))
-
 my_grammar = """
   S -> COL CD N
+  N -> JJ NN FR NNP
   N -> JJ NN
   N -> NN
-  COL -> 'collect' | 'gather'
+  COL -> 'Collect' | 'Gather'
+  FR -> 'from'
 """
-my_grammar += "  " + "\n  ".join([(r"CD -> '" + str(num) + r"'") for num in range(1,3)])
-my_grammar += "\n  " + "\n  ".join([(b + r" -> '" + a + r"'") for (a,b) in postags if b not in nonterms])
+for x in range(len(postags)):
+    postags[x] = (postags[x][0].replace(("\'", "\\\'")), postags[x][1])
+my_grammar += "  " + "\n  ".join([(r"CD -> '" + str(num) + r"'") for num in range(1,6)])
+my_grammar += "\n  " + "\n  ".join([(b + r" -> '" + a + r"'") for (a,b) in postags if b not in nonterms and a not in nonpos])
+#for (a,b) in postags:
+#    if b not in nonterms and a not in nonpos:
+#        if a == "you'll" and b not in test:
+#            print(b +": " + a + " - " + b[0])
+
 grammar = CFG.fromstring(my_grammar)
 print(grammar.productions())
 
