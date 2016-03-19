@@ -1,0 +1,142 @@
+import csv
+import numpy as np
+from nltk.corpus import stopwords
+import nltk
+from collections import defaultdict
+import re
+import random
+
+def pipeline_BernoulliNB(train_data, Y_train, test_data):
+    # build pipelines for each of the MultinomialNB, BernoulliNB, and LR classifiers using
+    # the scikit-learn pipeline approach
+    from sklearn.pipeline import Pipeline
+    from sklearn.feature_extraction.text import CountVectorizer
+    from nltk.corpus import stopwords
+    from sklearn.feature_extraction.text import TfidfTransformer
+    from sklearn.naive_bayes import BernoulliNB
+
+    ### YOUR SOLUTION STARTS HERE###
+    text_clf_bernNB = Pipeline([('vect', CountVectorizer(stop_words=stopwords.words('english'))),
+                                ('tfidf', TfidfTransformer()),
+                                ('clf', BernoulliNB(binarize=0)),
+                                ])
+    text_clf_bernNB = text_clf_bernNB.fit(train_data, Y_train)
+    predicted_bernNB = text_clf_bernNB.predict(test_data)
+    return predicted_bernNB
+
+
+
+if __name__ == "__main__":
+    data = []
+    with open('175_data.csv', 'rU') as f:
+        csv_reader = csv.reader(f)
+        for row in csv_reader:
+            data.append(row)
+    data = np.array(data)[1:]
+    inst = data[:294, 3]
+    story = data[:,4]
+    #I added a column called quest_type and hand labeled quests(kill, bring, travel, other)
+    quest_type = data[:294, 2]
+    
+##    X_train = inst[:150]
+##    X_test = inst[150:]
+##    Y_train = quest_type[:150]
+##    Y_test = quest_type[150:]
+##
+##    Y_hat = pipeline_BernoulliNB(X_train, Y_train, X_test)
+##    print(np.mean(Y_hat==Y_test))
+
+
+#______________________________________________
+ 
+##    #get a random paragraph's grammar pattern.
+##    patterns = defaultdict(int)
+##    for x in story:
+##        tokens = nltk.word_tokenize(x)
+##        tagged_tokens  = nltk.pos_tag(tokens)
+##        pattern = tuple(i[1] for i in tagged_tokens)
+####        if pattern in patterns:
+##            patterns[pattern] += 1
+##        else:
+##            patterns[pattern] = 1        
+##    chosen_pattern = random.choice(list(patterns.keys()))
+##    print(chosen_pattern)
+##
+##    #get a bag of tagged words.
+##    tagged_bag = defaultdict(int)
+##    for s in story:
+##        tokens =  nltk.word_tokenize(s)
+##        tagged_tokens = nltk.pos_tag(tokens)
+##        for t in tagged_tokens:
+##            if t in tagged_bag:
+##                tagged_bag[t] +=1
+##            else:
+##                tagged_bag[t] = 1
+##
+##    #for each tag, get word list.
+##    grammar_bag = {}
+##    for t in tagged_bag:
+##        if t[1] in grammar_bag:
+##            grammar_bag[t[1]].append(t[0])
+##        else:
+##            grammar_bag[t[1]] = [t[0]]
+##
+##
+##    #generate sentence based on grammar.
+##    result = ''
+##    for pos in chosen_pattern:
+##        result += random.choice(grammar_bag[pos]) + ' '
+##    print(result)
+
+#_________________________________________________________________
+    #two gram tagged bag to get next most frequent next word.
+    #currently in infinite loop
+##    print(story)
+##    tagged_bigram_bag = {}
+##    for s in story[:]:
+##        tagged_tokens = nltk.pos_tag(nltk.word_tokenize(s.lower()))
+##        for i in range(len(tagged_tokens)-1):
+##            if tagged_tokens[i] in tagged_bigram_bag:
+##                if tagged_tokens[i+1] in tagged_bigram_bag[tagged_tokens[i]]:
+##                    tagged_bigram_bag[tagged_tokens[i]][tagged_tokens[i+1]] += 1
+##                else:
+##                    tagged_bigram_bag[tagged_tokens[i]][tagged_tokens[i+1]] = 1
+##            else:
+##                tagged_bigram_bag[tagged_tokens[i]] = {tagged_tokens[i+1]:1}
+##    current = ('some', 'DT')
+##    result = ''
+##    while current != {} or current[0].isalnum():
+##        result += current[0] + ' '
+##        #print(sorted(tagged_bigram_bag[current], key = lambda x:x[1]))
+##        current = sorted(tagged_bigram_bag[current].items(), key = lambda x:x[1])[0][0]
+##        print(current)
+##        
+##    print (result)
+        
+#_________________________________________________
+    #three gram generate()
+    #has to start with certain words or random words
+    test_str = 'This is a test string, consisting of many sentences.  Hmm, what should I write?'
+    size = 25
+    three_gram_bag = {}
+    for s in story:
+        tokens = nltk.word_tokenize(s.lower())
+        if len(tokens) < 3:
+            continue
+        for i in range(len(tokens) -2):
+            w1, w2, w3 = tokens[i], tokens[i+1], tokens[i+2]
+            if (w1, w2) in three_gram_bag:
+                three_gram_bag[(w1, w2)].append(w3)
+            else:
+                three_gram_bag[(w1, w2)] = [w3]
+    
+    seed_word, next_word = random.choice(list(three_gram_bag.keys()))
+    w1, w2 = seed_word, next_word
+    result = []
+    for i in range(size):
+      result.append(w1)
+      w1, w2 = w2, random.choice(three_gram_bag[(w1, w2)])
+    result.append(w2)
+    print(' '.join(result))
+    #works only about half of the time due to key error....
+    #but output makes much more sense.
